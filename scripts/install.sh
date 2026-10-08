@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if [[ "${OS:-}" == "Windows_NT" ]] || [[ "$(uname -s 2>/dev/null || true)" =~ ^(MINGW|MSYS|CYGWIN) ]]; then
+  echo "This script is for Unix-like shells. Use PowerShell: pwsh -File ./scripts/install.ps1" >&2
+  exit 2
+fi
+
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 codex_root="${CODEX_HOME:-$HOME/.codex}"
 skill_root="$codex_root/skills"
@@ -18,7 +23,7 @@ for argument in "$@"; do
       ;;
     -h|--help)
       echo "Usage: ./scripts/install.sh [--with-sqlcipher] [wechat-cli] [wechat-intelligence-hub]"
-      echo "With no skill names, the complete WeChat Intelligence Hub is installed."
+      echo "On Windows, prefer: pwsh -File ./scripts/install.ps1"
       exit 0
       ;;
     --*)
@@ -35,8 +40,6 @@ if [ "${#skill_names[@]}" -eq 0 ]; then
   skill_names=(wechat-cli wechat-intelligence-hub)
 fi
 
-# The intelligence Skill depends on the read-only CLI. Keep the dependency
-# automatic so users install one product instead of assembling components.
 has_hub=0
 has_cli=0
 for skill_name in "${skill_names[@]}"; do
@@ -47,9 +50,6 @@ if [ "$has_hub" -eq 1 ] && [ "$has_cli" -eq 0 ]; then
   skill_names=(wechat-cli "${skill_names[@]}")
 fi
 
-# Deduplicate names while preserving order.
-# Bash 3.2 with `set -u` treats an empty array expansion as unbound, so keep a
-# sentinel until argument construction is complete.
 resolved_skills=("__rion_sentinel__")
 for skill_name in "${skill_names[@]}"; do
   already_added=0
@@ -64,8 +64,6 @@ shift
 
 mkdir -p "$skill_root"
 
-# Preflight every target before copying anything, so a conflict cannot leave a
-# partially installed set of skills behind.
 for skill_name in "$@"; do
   source_dir="$repo_root/skills/$skill_name"
   target_dir="$skill_root/$skill_name"
