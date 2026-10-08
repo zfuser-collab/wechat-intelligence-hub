@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import os
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -31,7 +30,9 @@ def install_lockfile(root: Path) -> None:
             "requests>=2.31\n"
             "beautifulsoup4>=4.12,<5\n"
             "jinja2>=3.1,<4\n"
-            "pandas>=2.2,<3\n",
+            "pandas>=2.2,<3\n"
+            "sqlcipher3>=0.6.2; platform_system == 'Windows'\n"
+            "zstandard>=0.25.0; platform_system == 'Windows'\n",
             encoding="utf-8",
         )
 
@@ -54,6 +55,10 @@ def write_install_state(runtime: Path) -> None:
         "python_version": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
         "platform": sys.platform,
         "mode": "windows-compatibility-bootstrap",
+        "notes": [
+            "This repo remains a fork of the upstream project and does not grant unrestricted access to real WeChat data.",
+            "Real database reads still require local authorization and valid access materials.",
+        ],
     }
     (runtime / "windows-install.json").write_text(json.dumps(state, indent=2), encoding="utf-8")
 
